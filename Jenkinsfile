@@ -1,9 +1,11 @@
 pipeline{
 	agent any
 	environment{
+		imagename = "vaibhavmangla00/currency-exchange-devops"
+		registryCredential = 'dockerhub'
+		dockerImage = ''
 		dockerHome = tool 'myDocker'
 		mavenHome = tool 'myMaven'
-		registryCredential = 'dockerhub'
 		PATH = "$dockerHome/bin:$mavenHome/bin:$PATH"
 	}
 	stages{
@@ -33,24 +35,29 @@ pipeline{
 				sh 'mvn package -DskipTests '
 			}
 		}
-		stage('Build Docker Image'){
+		stage('Building image') {
 			steps{
-				//"docker build -t vaibhavmangla00/currency-exchange-devops:$env.BUILD_TAG"
-				script{
-					dockerImage = docker.build("vaibhavmangla00/currency-exchange-devops:${env.BUILD_TAG}")
+				script {
+					dockerImage = docker.build imagename
+					}
+				}
+			}
+		stage('Deploy Image') {
+			steps{
+				script {
+					docker.withRegistry( '', registryCredential ) {
+					dockerImage.push("$BUILD_NUMBER")
+					dockerImage.push('latest')
+					}
 				}
 			}
 		}
-		stage('Deploy Image') {
-      		steps{
-        		script {
-          			docker.withRegistry( '', registryCredential ) {
-            			dockerImage.push()
-             			dockerImage.push('latest')
-          }
-        }
-      }
-    }
+		stage('Remove Unused docker image') {
+			steps{
+				sh "docker rmi $imagename:$BUILD_NUMBER"
+				sh "docker rmi $imagename:latest"
+			}
+		}
 		
 	}
 	post{
