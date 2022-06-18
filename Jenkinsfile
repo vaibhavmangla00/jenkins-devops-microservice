@@ -43,18 +43,13 @@ pipeline{
 		}
 		stage('Push Docker Image'){
 			steps{
-				sh "exit"
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'password', usernameVariable: 'username')]){
-                    /**
-                    * Restart docker server
-                    **/
-                    sh '''
-                        echo "${password} | docker login -u ${username} --password-stdin"
-                        docker stop docker_image
-                        docker rm docker_image
-                        docker pull docker_image:latest
-                        docker run -d -p 8000:8000 --name docker-image-name -t docker_image:latest
-                    '''
+				script{
+					docker.withRegistry('','dockerhub'){
+						dockerImage.push()
+						dockerImage.push('latest')
+					}
+					
+				}
 			}
 		}
 	}
