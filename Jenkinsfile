@@ -3,7 +3,7 @@ pipeline{
 	environment{
 		dockerHome = tool 'myDocker'
 		mavenHome = tool 'myMaven'
-		registryCredentials = 'dockerhub'
+		registryCredential = 'dockerhub'
 		PATH = "$dockerHome/bin:$mavenHome/bin:$PATH"
 	}
 	stages{
@@ -41,17 +41,17 @@ pipeline{
 				}
 			}
 		}
-		stage('Push Docker Image'){
-			steps{
-				script{
-					docker.withRegistry('','dockerhub'){
-						dockerImage.push()
-						dockerImage.push('latest')
-					}
-					
-				}
-			}
-		}
+		stage('Deploy Image') {
+      		steps{
+        		script {
+          			docker.withRegistry( '', registryCredential ) {
+            			dockerImage.push()
+             			dockerImage.push('latest')
+          }
+        }
+      }
+    }
+		
 	}
 	post{
 		always{
